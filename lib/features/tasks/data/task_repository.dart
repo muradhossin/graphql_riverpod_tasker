@@ -37,4 +37,42 @@ class TaskRepository {
       'completed': false,
     })).toList();
   }
+
+  Future<Task> createTask(String title) async {
+    const String mutation = '''
+    mutation CreateTask(\$input: CreatePostInput!) {
+      createPost(input: \$input) {
+        id
+        title
+      }
+    }
+    ''';
+
+    final result = await _client.mutate(
+      MutationOptions(
+        document: gql(mutation),
+        variables: {
+          'input': {
+            'title': title,
+            'body': '',
+          }
+        },
+      )
+    );
+
+    if(result.hasException) {
+      log('GraphQL Exception: ${result.exception.toString()}');
+      throw Exception(result.exception.toString());
+    }
+
+    final data = result.data?['createPost'];
+    return Task(
+      id: data['id'].toString(),
+      title: data['title'].toString(),
+      completed: false,
+    );
+
+  }
+
+
 }

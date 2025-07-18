@@ -1,15 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_riverpod_tasker/features/tasks/domain/task_model.dart';
+import 'package:graphql_riverpod_tasker/features/tasks/presentation/widgets/add_task_dialog.dart';
+import 'package:graphql_riverpod_tasker/features/tasks/providers/task_list_provider.dart';
 import 'package:graphql_riverpod_tasker/features/tasks/providers/task_provider.dart';
 
-class TasksScreen extends ConsumerWidget {
+class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(tasksProvider);
+  ConsumerState createState() => _TasksScreenState();
+}
 
+class _TasksScreenState extends ConsumerState<TasksScreen> {
+  late final TaskListNotifier notifier;
+
+  @override
+  void initState() {
+    super.initState();
+    notifier = ref.read(taskListProvider.notifier);
+    notifier.loadTasks();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tasksAsync = ref.watch(taskListProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
@@ -39,6 +54,20 @@ class TasksScreen extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final title = await showDialog<String>(
+            context: context,
+            builder: (context) => const AddTaskDialog(),
+          );
+          if(title != null && title.isNotEmpty) {
+            await notifier.addTask(title);
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
+
+
